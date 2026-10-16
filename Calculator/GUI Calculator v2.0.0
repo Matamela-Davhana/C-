@@ -1,0 +1,141 @@
+using System;
+using System.Windows.Forms;
+
+namespace SimpleCalculatorGUI
+{
+    public class CalculatorForm : Form
+    {
+        private TextBox display;
+        private string currentOperator;
+        private double firstNumber;
+        private bool operatorPressed;
+
+        public CalculatorForm()
+        {
+            this.Text = "Simple Calculator";
+            this.Width = 300;
+            this.Height = 400;
+
+            display = new TextBox();
+            display.ReadOnly = true;
+            display.Dock = DockStyle.Top;
+            display.Font = new System.Drawing.Font("Arial", 20);
+            this.Controls.Add(display);
+
+            var panel = new TableLayoutPanel();
+            panel.RowCount = 4;
+            panel.ColumnCount = 4;
+            panel.Dock = DockStyle.Fill;
+            this.Controls.Add(panel);
+
+            string[] buttons = {
+                "7","8","9","/",
+                "4","5","6","*",
+                "1","2","3","-",
+                "0","C","=","+"
+            };
+
+            foreach (var text in buttons)
+            {
+                var btn = new Button();
+                btn.Text = text;
+                btn.Dock = DockStyle.Fill;
+                btn.Font = new System.Drawing.Font("Arial", 16);
+                btn.Click += Button_Click;
+                panel.Controls.Add(btn);
+            }
+        }
+
+        private void Button_Click(object sender, EventArgs e)
+        {
+            var btn = sender as Button;
+
+            try
+            {
+                if (btn.Text == "C")
+                {
+                    display.Text = "";
+                    firstNumber = 0;
+                    currentOperator = "";
+                    operatorPressed = false;
+                }
+                else if (btn.Text == "=")
+                {
+                    if (string.IsNullOrWhiteSpace(display.Text))
+                    {
+                        MessageBox.Show("Please enter a number before pressing '='.", "Input Error");
+                        return;
+                    }
+
+                    double secondNumber;
+                    if (!double.TryParse(display.Text, out secondNumber))
+                    {
+                        MessageBox.Show("Invalid number entered.", "Input Error");
+                        return;
+                    }
+
+                    double result = 0;
+                    switch (currentOperator)
+                    {
+                        case "+": result = firstNumber + secondNumber; break;
+                        case "-": result = firstNumber - secondNumber; break;
+                        case "*": result = firstNumber * secondNumber; break;
+                        case "/":
+                            if (secondNumber == 0)
+                            {
+                                MessageBox.Show("Division by zero is not allowed.", "Math Error");
+                                return;
+                            }
+                            result = firstNumber / secondNumber;
+                            break;
+                        default:
+                            MessageBox.Show("No operator selected.", "Operation Error");
+                            return;
+                    }
+
+                    display.Text = result.ToString();
+                    currentOperator = "";
+                    operatorPressed = false;
+                }
+                else if ("+-*/".Contains(btn.Text))
+                {
+                    if (string.IsNullOrWhiteSpace(display.Text))
+                    {
+                        MessageBox.Show("Enter a number before selecting an operator.", "Input Error");
+                        return;
+                    }
+
+                    if (!double.TryParse(display.Text, out firstNumber))
+                    {
+                        MessageBox.Show("Invalid number entered.", "Input Error");
+                        return;
+                    }
+
+                    currentOperator = btn.Text;
+                    operatorPressed = true;
+                    display.Text = "";
+                }
+                else
+                {
+                    if (operatorPressed)
+                    {
+                        display.Text = "";
+                        operatorPressed = false;
+                    }
+                    display.Text += btn.Text;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Unexpected error: {ex.Message}", "Error");
+            }
+        }
+
+        [STAThread]
+        public static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.Run(new CalculatorForm());
+        }
+    }
+}
